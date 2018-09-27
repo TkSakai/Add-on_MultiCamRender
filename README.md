@@ -5,7 +5,7 @@
 ### Overview
 MultiCamRender Add-on allows you to render scene with multiple cameras at once.
 
-You can set up Start Frame,End Frame and Frame for Still to each camera.
+You can set up "Start","End"(for animation) and "Frame"(for Still) to each camera.
 
 ### Requirement
 Blender 2.79 
