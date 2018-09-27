@@ -1,22 +1,3 @@
-# ***** BEGIN GPL LICENSE BLOCK *****
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# ***** END GPL LICENCE BLOCK *****
-
 bl_info = {
     "name": "MultiCam Render",
     "author": "TkSakai",
@@ -78,6 +59,7 @@ class RENDER_PT_multicamrenderPanel(bpy.types.Panel):
         col = layout.column()
         
         col.prop(scene,"multicammkdir",text="Make each folder")
+        col.prop(scene,"multicamopendir",text="Open directory")
  
 
 ### OPERATOR ####
@@ -104,7 +86,8 @@ class RENDER_OT_multicamrender(bpy.types.Operator):
         
         multicamlist = [item for item in context.scene.multicamlist if item.camOb.data.multicamactive]
         
-        subprocess.Popen("explorer {}".format(defaultpath))
+        if context.scene.multicamopendir:
+            subprocess.Popen("explorer {}".format(defaultpath))
         
         for item in multicamlist:
             
@@ -168,7 +151,14 @@ class RENDER_OT_multicamNewItem(bpy.types.Operator):
                 item.name = ob.name #just for bpy.context.scene.objects.__contains__
                 item.camOb = ob 
                 
-                item.camOb.data.currentframe = context.scene.frame_current
+                if item.camOb.data.multicamaset == False:
+                    item.camOb.data.currentframe = context.scene.frame_current
+                    item.camOb.data.startframe = context.scene.frame_start
+                    item.camOb.data.endframe = context.scene.frame_end
+                    
+                    item.camOb.data.multicamaset = True
+                
+        
             
         return{"FINISHED"}
 
@@ -202,26 +192,26 @@ class MultiCamListItem(bpy.types.PropertyGroup):
 
 ### REGISTER ####
     
-clss = [RENDER_PT_multicamrenderPanel,RENDER_OT_multicamNewItem,RENDER_OT_multicamDeleteItem,MultiCamListItem,multicam_UL_List,RENDER_OT_multicamrender]
+clss = [RENDER_PT_multicamrenderPanel,RENDER_OT_multicamNewItem,RENDER_OT_multicamDeleteItem,MultiCamListItem,multicam_UL_List,RENDER_OT_multicamrender]    
+
 
 def register():
     
-    startframe = bpy.context.scene.frame_start
-    endframe = bpy.context.scene.frame_end    
-    
+
     for cls in clss:
         bpy.utils.register_class(cls)
 
     bpy.types.Scene.multicamindex= bpy.props.IntProperty(name="index of multicam list",default = 0 )
     bpy.types.Scene.multicamlist = bpy.props.CollectionProperty(type=MultiCamListItem)
     bpy.types.Scene.multicammkdir = bpy.props.BoolProperty(default = True)
+    bpy.types.Scene.multicamopendir = bpy.props.BoolProperty(default = False)
     
-    
-    bpy.types.Camera.startframe = bpy.props.IntProperty(name="StartFrame",default = startframe ,description = "For Animation Render")
-    bpy.types.Camera.endframe = bpy.props.IntProperty(name="EndFrame",default = endframe ,description = "For Animation Render")
+    bpy.types.Camera.startframe = bpy.props.IntProperty(name="StartFrame",default = 0,description = "For Animation Render")
+    bpy.types.Camera.endframe = bpy.props.IntProperty(name="EndFrame",default = 240 ,description = "For Animation Render")
     bpy.types.Camera.currentframe = bpy.props.IntProperty(name="Frame",default = -1,description="For Still Render")
     bpy.types.Camera.multicamactive = bpy.props.BoolProperty(default = True)
-
+    bpy.types.Camera.multicamaset = bpy.props.BoolProperty(default=False)
+    
     
 def unregister():
     
